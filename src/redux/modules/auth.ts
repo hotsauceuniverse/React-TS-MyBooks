@@ -1,6 +1,9 @@
 // 인증관리
 
-import { createActions, handleActions } from "redux-actions"
+import { Action, createActions, handleActions } from "redux-actions"
+import { call, put, takeEvery } from "redux-saga/effects";
+import UserService from "../../services/UserService";
+import { LoginReqType } from "../../Types";
 
 // state 구상
 interface AuthState {
@@ -49,6 +52,27 @@ const reducer = handleActions<AuthState, string>({
 export default reducer;
 
 // saga
-export function authSaga() {
-  
+export const {login, logout} = createActions("LOGIN", "LOGOUT", {prefix})
+
+function* loginSaga(action: Action<LoginReqType>) {
+  try{
+    yield put(pending());
+    // login api를 쳐서 그 안에 있는 데이터를 꺼내 토큰으로 받아와야 한다.
+    // 인라인으로 직접 쓰게 되면 api의 로직이 같이 들어오기 때문에 api로직을 분리 해야된다.
+    const token: string = yield call(UserService.login, action.payload);
+    // 받아온 token을 localstorage에 넣어야 한다.
+    yield put(success(token));
+    // login이 정상적으로 되면 Sign in 페이지에서 리스트 페이지로 이동 시켜야 된다. => push처리! 
+  } catch(error) {
+    yield put(fail(new Error(error?.response?.data?.error || 'UNKNOWN_ERROR')));
+  }
+} // Action.payload를 꺼냈을 때 LoginReqType나오게 된다.
+
+function* logoutSaga() {
+
+}
+
+export function* authSaga() {
+  yield takeEvery(`${prefix}/LOGIN`, loginSaga);
+  yield takeEvery(`${prefix}/LOGOUT`, logoutSaga)
 }
