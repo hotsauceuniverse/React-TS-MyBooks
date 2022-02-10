@@ -1,7 +1,9 @@
 // 인증관리
 
+import { push } from "connected-react-router";
 import { Action, createActions, handleActions } from "redux-actions"
 import { call, put, takeEvery } from "redux-saga/effects";
+import TokenService from "../../services/TokenService";
 import UserService from "../../services/UserService";
 import { LoginReqType } from "../../Types";
 
@@ -61,9 +63,11 @@ function* loginSaga(action: Action<LoginReqType>) {
     // 인라인으로 직접 쓰게 되면 api의 로직이 같이 들어오기 때문에 api로직을 분리 해야된다.
     const token: string = yield call(UserService.login, action.payload);
     // 받아온 token을 localstorage에 넣어야 한다.
+    TokenService.set(token);
     yield put(success(token));
+    yield put(push("/"));
     // login이 정상적으로 되면 Sign in 페이지에서 리스트 페이지로 이동 시켜야 된다. => push처리! 
-  } catch(error) {
+  } catch(error: any) {
     yield put(fail(new Error(error?.response?.data?.error || 'UNKNOWN_ERROR')));
   }
 } // Action.payload를 꺼냈을 때 LoginReqType나오게 된다.
